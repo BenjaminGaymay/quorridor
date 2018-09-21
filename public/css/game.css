@@ -1,0 +1,26 @@
+#chatBox {
+	width: 30vw;
+}
+
+#messages {
+	height: 15vw;
+	overflow-y: auto;
+	overflow-wrap: break-word;
+	padding: 0;
+}
+
+.message {
+	margin: 0;
+}
+
+#messages, #chatBox, #createRoomForm, #createRoom, #colorpicker, #roomList {
+	display: none;
+}
+
+#color:hover {
+	filter: brightness(0.9);
+}
+
+#color:focus {
+	box-shadow:0 0 0 0;
+}

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="/css/game.css">
+		<script src="/js/iro.min.js"></script>
+	</head>
+
+	<body class="container">
+
+		<h1 class="text-center" id="gameState"> Connecte toi ! </h1>
+
+		<form id="connectionForm">
+			<div class="form-group row">
+				<label class="col-sm-2 col-form"> Choisis ta couleure </label>
+				<div class="col-sm-3">
+					<button id="color" type="button" class="btn btn-primary btn-lg col-form"></button>
+				</div>
+				<div class="col-sm-7">
+					<div id="colorpicker" class="position-absolute"></div>
+				</div>
+
+				<label class="col-sm-2 col-form-label"> Puis ton pseudo : </label>
+				<div class="col-xs-3">
+					<input class="col-sm-10 col-form form-control col-xs-3" id="pseudo" type="text"/>
+				</div>
+			</div>
+
+			<button type="button" class="btn btn-outline-primary btn-lg btn-block" id="validateConnection">Se connecter</button>
+		</form>
+
+		<ul id="roomList" class="list-group"></ul>
+
+		<button id="createRoom" type="button" class="btn btn-outline-primary btn-lg btn-block mt-5">Créer un salon</button>
+
+
+		<form id="createRoomForm" action="" class="mt-5">
+			<div class="form-group row">
+				<label class="col-sm-2 col-form-label"> Nom du salon : </label>
+				<input id="roomName" name="roomName" type="text" class="col-sm-10 col-form form-control col-xs-3" autocomplete="off"/>
+
+
+				<label class="col-sm-2 col-form-label mt-2"> Nombre de joueurs : </label>
+				<div class="col-xs-3 mt-2">
+					<select class="form-control" id="nbPlayers" name="nbPlayers">
+						<option value="2" selected> 2 </option>
+						<option value="3"> 3 </option>
+						<option value="4"> 4 </option>
+					</select>
+				</div>
+			</div>
+
+			<button class="btn btn-outline-primary btn-lg btn-block">Créer le salon</button>
+		 </form>
+
+		<div id="chatBox" >
+			<ul id="messages" class="border border-primary rounded"></ul>
+			<form id="chatForm" action="">
+				<div class="col-xs-3 mt-2">
+					<input id="chatInput" class="form-control" placeholder="Envoyer un message" autocomplete="off"/>
+				</div>
+			</form>
+		</div>
+
+		<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="/js/bootstrap.min.js"></script>
+		<script src="/js/p5.min.js"></script>
+		<script src="/js/socket.js"></script>
+		<script src="/js/game.js"></script>
+
+	</body>
+</html>
