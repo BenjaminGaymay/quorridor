@@ -23,6 +23,7 @@ $("#color").click(function() {
 });
 
 $("#validateConnection").click(function() {
+	playerColor = color(colorPicker.color.hexString);
 	socket.emit("playerInfos", {color: colorPicker.color.hexString, name: $("#pseudo").val()});
 });
 

@@ -230,13 +230,54 @@ function getMovePossibilites(players, cell, playerWhoPlay) {
 	var cells = [cell - 9, cell % 9 == 8 ? -1 : cell + 1, cell + 9, cell % 9 == 0 ? -1 : cell - 1];
 	var dynamicPos, relativeCell, line, column;
 	var impossibleMoves = [];
+	var jumpMoves = [];
 	var finalCells = [];
 
 	for (var player of players) {
 		dynamicPos = getRotationByIndexInRoom(player, playerWhoPlay, player.datas.pos);
 
 		if (cells.includes(dynamicPos)) {
+			switch (playerWhoPlay.datas.pos - dynamicPos) {
+				case -9:
+					jumpMoves.push([dynamicPos, dynamicPos + 9]);
+					jumpMoves.push([dynamicPos, dynamicPos - 1]);
+					jumpMoves.push([dynamicPos, dynamicPos + 1]);
+					break;
+				case -1:
+					if ((dynamicPos + 1) % 9 != 0) {
+						jumpMoves.push([dynamicPos, dynamicPos + 1]);
+						jumpMoves.push([dynamicPos, dynamicPos + 9]);
+						jumpMoves.push([dynamicPos, dynamicPos - 9]);
+					};
+					break;
+				case 1:
+					if ((dynamicPos - 1) % 9 != 0) {
+						jumpMoves.push([dynamicPos, dynamicPos - 1]);
+						jumpMoves.push([dynamicPos, dynamicPos - 9]);
+						jumpMoves.push([dynamicPos, dynamicPos + 9]);
+					};
+					break;
+				case 9:
+					jumpMoves.push([dynamicPos, dynamicPos - 9]);
+					jumpMoves.push([dynamicPos, dynamicPos - 1]);
+					jumpMoves.push([dynamicPos, dynamicPos + 1]);
+					break;
+			};
+		};
+
+	};
+
+	for (var player of players) {
+		dynamicPos = getRotationByIndexInRoom(player, playerWhoPlay, player.datas.pos);
+
+		if (cells.includes(dynamicPos)) {
 			cells.splice(cells.indexOf(dynamicPos), 1);
+		};
+
+		for (var i = 0 ; i < jumpMoves.length ; i++) {
+			if (jumpMoves[i][1] == dynamicPos) {
+				jumpMoves[i][1] = -1;
+			};
 		};
 
 	};
@@ -250,13 +291,49 @@ function getMovePossibilites(players, cell, playerWhoPlay) {
 
 		switch (wall % 2) {
 			case 0:
+				// Jump Top
+				impossibleMoves.push([relativeCell - 9, relativeCell + 9]);
+				impossibleMoves.push([relativeCell - 8, relativeCell + 10]);
+
+				// Jump Bot
+				impossibleMoves.push([relativeCell, relativeCell + 18]);
+				impossibleMoves.push([relativeCell + 1, relativeCell + 19]);
+
+				// Normal
 				impossibleMoves.push([relativeCell, relativeCell + 9]);
 				impossibleMoves.push([relativeCell + 1, relativeCell + 10]);
 				break;
 			case 1:
+				// Jump Left
+				impossibleMoves.push([relativeCell - 1, relativeCell + 1]);
+				impossibleMoves.push([relativeCell + 8, relativeCell + 10]);
+
+				// Jump Right
+				impossibleMoves.push([relativeCell, relativeCell + 2]);
+				impossibleMoves.push([relativeCell + 9, relativeCell + 11]);
+
+				// Normal
 				impossibleMoves.push([relativeCell, relativeCell + 1]);
 				impossibleMoves.push([relativeCell + 9, relativeCell + 10]);
 				break;
+		};
+	};
+
+	for (var i = 0 ; i < jumpMoves.length ; i++) {
+		if (arrayIndex(impossibleMoves, [player.datas.pos, jumpMoves[i][1]]) != -1) {
+			jumpMoves[i][1] = -1;
+		};
+		if (arrayIndex(impossibleMoves, [jumpMoves[i][0], jumpMoves[i][1]]) != -1) {
+			jumpMoves[i][1] = -1;
+		};
+	};
+
+	for (var i = 0 ; i < jumpMoves.length - 2 ; i += 3) {
+		if (jumpMoves[i][1] == -1) {
+			cells.push(jumpMoves[i + 1][1]);
+			cells.push(jumpMoves[i + 2][1]);
+		} else {
+			cells.push(jumpMoves[i][1]);
 		};
 	};
 
@@ -429,7 +506,7 @@ io.on('connection', function(client) {
 	});
 
 	client.on("disconnect", function() {
-		if ("room" in client.datas) {
+		if ("room" in client.datas && client.datas.room) {
 			room = client.datas.room;
 			if (room.start == false) {
 				for (var i = 0 ; i < room.players.length ; i++) {
@@ -439,8 +516,10 @@ io.on('connection', function(client) {
 				};
 			} else {
 				for (var player of room.players) {
-					player.emit("connectionComplete");
 					player.datas.room = undefined;
+					player.datas.walls = [];
+					player.emit("resetGame");
+					player.emit("connectionComplete");
 				};
 				room.players = [];
 			};

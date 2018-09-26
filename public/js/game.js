@@ -9,6 +9,7 @@ var gameBoardHeight = gameBoardWidth * 0.8;
 var gameboard = [];
 var walls = [];
 var wallsRemaining = 0;
+var playerColor;
 
 class Wall {
 	constructor (x, y, size, axe) {
@@ -78,6 +79,8 @@ function setup() {
 
 	noStroke();
 
+	playerColor = color(colorPicker.color.hexString);
+
 	for (var y = 0 ; y < 9 ; y++) {
 		for (var x = 0 ; x < 9 ; x++) {
 			gameboard.push(new Cell(x, y, size));
@@ -124,7 +127,7 @@ function draw() {
 	};
 
 	for (var i = 0 ; i < wallsRemaining ; i++) {
-		fill(color("#000000"));
+		fill(playerColor);
 		rect(gameBoardWidth - walls[0].width * 0.9, i * gameBoardHeight / 10 + gameBoardHeight / 20, walls[0].width * 0.8, walls[0].height, 10);
 	};
 }
