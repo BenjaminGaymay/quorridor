@@ -344,6 +344,7 @@ io.on('connection', function(client) {
 
 	client.on('createRoom', function(data) {
 		if (data.name.length > 0) {
+			// verifier les noms identiques
 			removeEmptyRooms();
 			roomList.push(new Room(data));
 			var joinableRooms = getJoinableRooms();
@@ -370,12 +371,6 @@ io.on('connection', function(client) {
 		client.broadcast.emit('roomList', joinableRooms);
 		client.emit('roomList', joinableRooms);
 
-		client.on("chatMessage", function(data) {
-			for (var player of client.datas.room.players) {
-				player.emit('chatMessage', {name: client.datas.name, message: data, color: client.datas.color});
-			};
-		});
-
 		if (client.datas.room.getNbPlayers() == client.datas.room.nbPlayers) {
 			client.datas.room.startGame();
 		} else {
@@ -383,8 +378,21 @@ io.on('connection', function(client) {
 		};
 	});
 
+	client.on("chatMessage", function(data) {
+		if (client.datas.room) {
+			for (var player of client.datas.room.players) {
+				player.emit('chatMessage', {
+					name: client.datas.name,
+					message: data,
+					color: client.datas.color
+				});
+			};
+		};
+	});
+
 	client.on('move', function(data) {
-		if (client.datas.room.isClientTurn(client.datas) &&
+		if (client.datas.room &&
+			client.datas.room.isClientTurn(client.datas) &&
 			client.datas.deplacements.includes(data.cell)) {
 
 			var moveInfos = {
@@ -405,7 +413,8 @@ io.on('connection', function(client) {
 	});
 
 	client.on("newWall", function(data) {
-		if (client.datas.room.isClientTurn(client.datas) &&
+		if (client.datas.room &&
+			client.datas.room.isClientTurn(client.datas) &&
 			client.datas.wallsRemaining > 0 &&
 			notSuperimposed(client.datas.walls, data.wall)) {
 			var wallInfos = {
@@ -421,12 +430,20 @@ io.on('connection', function(client) {
 
 	client.on("disconnect", function() {
 		if ("room" in client.datas) {
-			for (var i = 0 ; i < client.datas.room.players.length ; i++) {
-				if (client.datas.id == client.datas.room.players[i].id) {
-					client.datas.room.players.splice(i, 1);
+			room = client.datas.room;
+			if (room.start == false) {
+				for (var i = 0 ; i < room.players.length ; i++) {
+					if (client.datas.id == room.players[i].id) {
+						room.players.splice(i, 1);
+					};
 				};
+			} else {
+				for (var player of room.players) {
+					player.emit("connectionComplete");
+					player.datas.room = undefined;
+				};
+				room.players = [];
 			};
-
 			removeEmptyRooms();
 			var joinableRooms = getJoinableRooms();
 			client.broadcast.emit('roomList', joinableRooms);

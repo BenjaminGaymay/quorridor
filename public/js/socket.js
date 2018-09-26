@@ -27,6 +27,10 @@ $("#validateConnection").click(function() {
 });
 
 socket.on('connectionComplete', function() {
+	$("#messages").hide();
+	$("#chatBox").hide();
+	$("#timer").hide();
+	$(canvas).hide();
 	$("#connectionForm").hide()
 	$("#gameState").text("Choisir un salon");
 	$("#roomList").show();
@@ -70,7 +74,7 @@ socket.on('waitingForPlayers', function() {
 });
 
 socket.on('gameEnd', function(data) {
-	$("#gameState").text("Player " + data.winner + " win!");
+	$("#gameState").text("C'est " + data.winner + " qui gagne la partie !");
 	$("#resetGame").show();
 	$("#timer").show();
 });
@@ -111,7 +115,6 @@ $(document).on('click', '.rooms', function() {
 
 socket.on("roomList", function(data) {
 	$('#roomList').html('');
-	console.log(data);
 	for (var room of data) {
 		var newRoom = $("<li class='rooms list-group-item d-flex justify-content-between align-items-center'>");
 		var badge = room.connected + '/' + room.requested;
