@@ -13,7 +13,7 @@
 	margin: 0;
 }
 
-#messages, #chatBox, #createRoomForm, #createRoom, #colorpicker, #roomList {
+#timer, #messages, #chatBox, #createRoomForm, #createRoom, #colorpicker, #roomList {
 	display: none;
 }
 

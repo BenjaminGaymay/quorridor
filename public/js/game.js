@@ -173,3 +173,13 @@ socket.on('newWall', function(data) {
 socket.on('wallsRemaining', function(data) {
 	wallsRemaining = data;
 });
+
+socket.on("resetGame", function() {
+	for (var cell of gameboard) {
+		cell.color = color("#909090");
+	};
+
+	for (var wall of walls) {
+		wall.color = color(0, 0, 0, 0);
+	};
+});

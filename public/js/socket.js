@@ -23,11 +23,11 @@ $("#color").click(function() {
 });
 
 $("#validateConnection").click(function() {
-	$("#connectionForm").hide()
 	socket.emit("playerInfos", {color: colorPicker.color.hexString, name: $("#pseudo").val()});
 });
 
 socket.on('connectionComplete', function() {
+	$("#connectionForm").hide()
 	$("#gameState").text("Choisir un salon");
 	$("#roomList").show();
 	$("#createRoom").show();
@@ -41,16 +41,19 @@ $("#createRoom").click(function() {
 
 $("#createRoomForm").submit(function(e) {
 	e.preventDefault();
-	$(this).hide();
 	socket.emit("createRoom", {nbPlayers: $("#nbPlayers").val(), name: $("#roomName").val()});
-	socket.on("roomCreated", function() {
-		socket.emit('joinRoom', {name: $("#roomName").val()});
-	});
+});
+
+socket.on("roomCreated", function() {
+	$("#createRoomForm").hide();
+	socket.emit('joinRoom', {name: $("#roomName").val()});
 });
 
 socket.on('gameStart', function() {
+	$("#createRoomForm").hide();
 	$("#createRoom").hide();
 	$("#roomList").hide();
+	$("#timer").hide();
 	$("#gameState").text("Waouh");
 	$("#messages").show();
 	$("#chatBox").show();
@@ -58,6 +61,7 @@ socket.on('gameStart', function() {
 });
 
 socket.on('waitingForPlayers', function() {
+	$("#createRoomForm").hide();
 	$("#createRoom").hide();
 	$("#roomList").hide();
 	$("#messages").show();
@@ -67,6 +71,12 @@ socket.on('waitingForPlayers', function() {
 
 socket.on('gameEnd', function(data) {
 	$("#gameState").text("Player " + data.winner + " win!");
+	$("#resetGame").show();
+	$("#timer").show();
+});
+
+socket.on("timer", function(data) {
+	$("#timer").text(data);
 });
 
 $("#chatForm").submit(function(e) {
