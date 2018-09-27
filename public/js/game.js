@@ -34,6 +34,7 @@ class Wall {
 		this.id = walls.length;
 		this.color = color(0, 0, 0, 0);
 		this.axe = axe;
+		this.stroke = false;
 	};
 
 	mouseInCell() {
@@ -55,6 +56,7 @@ class Cell {
 		this.yEnd = this.y + this.height;
 		this.color = color("#909090");
 		this.size = size;
+		this.stroke = false;
 	};
 
 	writeID() {
@@ -76,8 +78,6 @@ function setup() {
 
 	canvas = createCanvas(gameBoardWidth, gameBoardHeight).canvas;
 	$(canvas).hide();
-
-	noStroke();
 
 	playerColor = color(colorPicker.color.hexString);
 
@@ -118,16 +118,27 @@ function draw() {
 
 	for (var cell of gameboard) {
 		fill(cell.color);
+		if (cell.stroke) {
+			stroke("#000000");
+		} else {
+			noStroke();
+		};
 		rect(cell.x, cell.y, cell.width, cell.height, 10);
 	};
 
 	for (var wall of walls) {
 		fill(wall.color);
+		if (wall.stroke) {
+			stroke("#000000");
+		} else {
+			noStroke();
+		};
 		rect(wall.x, wall.y, wall.width, wall.height, 10);
 	};
 
 	for (var i = 0 ; i < wallsRemaining ; i++) {
 		fill(playerColor);
+		stroke("#000000");
 		rect(gameBoardWidth - walls[0].width * 0.9, i * gameBoardHeight / 10 + gameBoardHeight / 20, walls[0].width * 0.8, walls[0].height, 10);
 	};
 }
@@ -151,6 +162,7 @@ socket.on("turnEnd", function() {
 function resetCells() {
 	for (var cell of deplacementCells) {
 		cell.color = color("#909090");
+		cell.stroke = false;
 	};
 
 	deplacementCells = [];
@@ -160,8 +172,10 @@ socket.on('move', function(data) {
 
 	resetCells();
 
+	gameboard[data.to].stroke = true;
 	gameboard[data.to].color = color(data.color);
 	if ("from" in data) {
+		gameboard[data.from].stroke = false;
 		gameboard[data.from].color = color("#909090");
 	}
 });
@@ -171,6 +185,7 @@ socket.on('newWall', function(data) {
 	resetCells();
 
 	walls[data.wallID].color = color(data.color);
+	walls[data.wallID].stroke = true;
 });
 
 socket.on('wallsRemaining', function(data) {
@@ -180,9 +195,11 @@ socket.on('wallsRemaining', function(data) {
 socket.on("resetGame", function() {
 	for (var cell of gameboard) {
 		cell.color = color("#909090");
+		cell.stroke = false;
 	};
 
 	for (var wall of walls) {
 		wall.color = color(0, 0, 0, 0);
+		wall.stroke = false;
 	};
 });

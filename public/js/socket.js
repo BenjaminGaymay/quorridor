@@ -7,7 +7,11 @@ socket.on('connect', function(data) {
 var colorPicker = new iro.ColorPicker("#colorpicker", {
 	width: 200,
 	height: 200,
-	color: {r: 0, g: 255, b: 0},
+	color: {
+		r: Math.floor(Math.random() * 256),
+		g: Math.floor(Math.random() * 256),
+		b: Math.floor(Math.random() * 256)
+	},
 	markerRadius: 8,
 	anticlockwise: true,
 	css: {
@@ -20,6 +24,10 @@ var colorPicker = new iro.ColorPicker("#colorpicker", {
 
 $("#color").click(function() {
 	$("#colorpicker").toggle();
+});
+
+$("#colorpicker").click(function() {
+	$(this).toggle();
 });
 
 $("#validateConnection").click(function() {

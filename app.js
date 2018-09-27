@@ -62,17 +62,19 @@ class Room {
 		this.start = true;
 		var talker = this.players[0];
 
-		talker.broadcast.emit('roomList', getJoinableRooms());
-		talker.emit('roomList', getJoinableRooms());
+		if (talker) {
+			talker.broadcast.emit('roomList', getJoinableRooms());
+			talker.emit('roomList', getJoinableRooms());
 
-		for (var player of this.players) {
-			player.emit('gameStart');
-			player.datas.wallsRemaining = 20 / this.players.length;
-			player.emit('wallsRemaining', player.datas.wallsRemaining);
+			for (var player of this.players) {
+				player.emit('gameStart');
+				player.datas.wallsRemaining = 20 / this.players.length;
+				player.emit('wallsRemaining', player.datas.wallsRemaining);
+			};
+
+			givePositionToPlayers(talker.datas.room.players);
+			talker.datas.room.nextTurn();
 		};
-
-		givePositionToPlayers(talker.datas.room.players);
-		talker.datas.room.nextTurn();
 	}
 
 	nextTurn() {
@@ -162,9 +164,9 @@ function removeEmptyRooms() {
 
 function notSuperimposed(walls, newWall) {
 	for (var wall of walls) {
-		if (newWall % 2 == 0 && (wall == newWall - 2 || wall == newWall ||
-			wall == newWall + 1 || wall == newWall + 2)) {
-				return false;
+		if (newWall % 2 == 0 && ((wall == newWall - 2 && wall % 16 != 14) || wall == newWall ||
+		wall == newWall + 1 || (wall == newWall + 2 && wall % 16 != 0))) {
+			return false;
 		} else if (newWall % 2 == 1 && (wall == newWall - 16 ||
 			wall == newWall - 1 || wall == newWall || wall == newWall + 16)) {
 				return false;
@@ -240,27 +242,23 @@ function getMovePossibilites(players, cell, playerWhoPlay) {
 			switch (playerWhoPlay.datas.pos - dynamicPos) {
 				case -9:
 					jumpMoves.push([dynamicPos, dynamicPos + 9]);
-					jumpMoves.push([dynamicPos, dynamicPos - 1]);
-					jumpMoves.push([dynamicPos, dynamicPos + 1]);
+					jumpMoves.push([dynamicPos, (dynamicPos - 1) % 9 == 8 ? -1 : dynamicPos - 1]);
+					jumpMoves.push([dynamicPos, (dynamicPos + 1) % 9 == 0 ? -1 : dynamicPos + 1]);
 					break;
 				case -1:
-					if ((dynamicPos + 1) % 9 != 0) {
-						jumpMoves.push([dynamicPos, dynamicPos + 1]);
-						jumpMoves.push([dynamicPos, dynamicPos + 9]);
-						jumpMoves.push([dynamicPos, dynamicPos - 9]);
-					};
+					jumpMoves.push([dynamicPos, (dynamicPos + 1) % 9 == 0 ? -1 : dynamicPos + 1]);
+					jumpMoves.push([dynamicPos, dynamicPos + 9]);
+					jumpMoves.push([dynamicPos, dynamicPos - 9]);
 					break;
 				case 1:
-					if ((dynamicPos - 1) % 9 != 0) {
-						jumpMoves.push([dynamicPos, dynamicPos - 1]);
-						jumpMoves.push([dynamicPos, dynamicPos - 9]);
-						jumpMoves.push([dynamicPos, dynamicPos + 9]);
-					};
+					jumpMoves.push([dynamicPos, (dynamicPos - 1) % 9 == 8 ? -1 : dynamicPos - 1]);
+					jumpMoves.push([dynamicPos, dynamicPos - 9]);
+					jumpMoves.push([dynamicPos, dynamicPos + 9]);
 					break;
 				case 9:
 					jumpMoves.push([dynamicPos, dynamicPos - 9]);
-					jumpMoves.push([dynamicPos, dynamicPos - 1]);
-					jumpMoves.push([dynamicPos, dynamicPos + 1]);
+					jumpMoves.push([dynamicPos, (dynamicPos - 1) % 9 == 8 ? -1 : dynamicPos - 1]);
+					jumpMoves.push([dynamicPos, (dynamicPos + 1) % 9 == 0 ? -1 : dynamicPos + 1]);
 					break;
 			};
 		};
@@ -299,6 +297,10 @@ function getMovePossibilites(players, cell, playerWhoPlay) {
 				impossibleMoves.push([relativeCell, relativeCell + 18]);
 				impossibleMoves.push([relativeCell + 1, relativeCell + 19]);
 
+				// Jump Diag
+				impossibleMoves.push([relativeCell, relativeCell + 10]);
+				impossibleMoves.push([relativeCell + 1, relativeCell + 8]);
+
 				// Normal
 				impossibleMoves.push([relativeCell, relativeCell + 9]);
 				impossibleMoves.push([relativeCell + 1, relativeCell + 10]);
@@ -312,6 +314,10 @@ function getMovePossibilites(players, cell, playerWhoPlay) {
 				impossibleMoves.push([relativeCell, relativeCell + 2]);
 				impossibleMoves.push([relativeCell + 9, relativeCell + 11]);
 
+				// Jump Diag
+				impossibleMoves.push([relativeCell, relativeCell + 10]);
+				impossibleMoves.push([relativeCell + 1, relativeCell + 8]);
+
 				// Normal
 				impossibleMoves.push([relativeCell, relativeCell + 1]);
 				impossibleMoves.push([relativeCell + 9, relativeCell + 10]);
@@ -320,10 +326,9 @@ function getMovePossibilites(players, cell, playerWhoPlay) {
 	};
 
 	for (var i = 0 ; i < jumpMoves.length ; i++) {
-		if (arrayIndex(impossibleMoves, [player.datas.pos, jumpMoves[i][1]]) != -1) {
-			jumpMoves[i][1] = -1;
-		};
-		if (arrayIndex(impossibleMoves, [jumpMoves[i][0], jumpMoves[i][1]]) != -1) {
+		if (arrayIndex(impossibleMoves, [playerWhoPlay.datas.pos, jumpMoves[i][1]]) != -1 ||
+			arrayIndex(impossibleMoves, [playerWhoPlay.datas.pos, jumpMoves[i][0]]) != -1 ||
+			arrayIndex(impossibleMoves, [jumpMoves[i][0], jumpMoves[i][1]]) != -1) {
 			jumpMoves[i][1] = -1;
 		};
 	};
@@ -420,7 +425,7 @@ io.on('connection', function(client) {
 	});
 
 	client.on('createRoom', function(data) {
-		if (data.name.length > 0) {
+		if (data.name.length > 0 && getRoomByName(data.name) == undefined) {
 			// verifier les noms identiques
 			removeEmptyRooms();
 			roomList.push(new Room(data));
@@ -494,19 +499,21 @@ io.on('connection', function(client) {
 			client.datas.room.isClientTurn(client.datas) &&
 			client.datas.wallsRemaining > 0 &&
 			notSuperimposed(client.datas.walls, data.wall)) {
-			var wallInfos = {
-				wallID: data.wall,
-				color: client.datas.color
-			}
-			sendNewWallPos(client, wallInfos);
-			client.datas.wallsRemaining -= 1;
-			client.emit('wallsRemaining', client.datas.wallsRemaining);
-			client.datas.room.nextTurn();
-		};
+				var wallInfos = {
+					wallID: data.wall,
+					color: client.datas.color
+				};
+
+				sendNewWallPos(client, wallInfos);
+				client.datas.wallsRemaining -= 1;
+				client.emit('wallsRemaining', client.datas.wallsRemaining);
+				client.datas.room.nextTurn();
+			};
 	});
 
 	client.on("disconnect", function() {
-		if ("room" in client.datas && client.datas.room) {
+		if (client && client.datas &&
+			"room" in client.datas && client.datas.room) {
 			room = client.datas.room;
 			if (room.start == false) {
 				for (var i = 0 ; i < room.players.length ; i++) {
@@ -518,6 +525,7 @@ io.on('connection', function(client) {
 				for (var player of room.players) {
 					player.datas.room = undefined;
 					player.datas.walls = [];
+					player.pos = 76;
 					player.emit("resetGame");
 					player.emit("connectionComplete");
 				};
