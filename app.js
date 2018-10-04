@@ -44,7 +44,7 @@ var roomList = [];
 class Room {
 	constructor(infos) {
 		this.players = [];
-		this.turn = 0;
+		this.turn = Math.floor(Math.random() * infos.nbPlayers);
 		this.nbPlayers = infos.nbPlayers;
 		this.name = infos.name;
 		this.start = false;
@@ -404,6 +404,77 @@ function getRotationByIndexInRoom(playerWhoMove, playerWhoReceive, pos, wall = f
 }
 
 
+// Pathfinder
+
+function getNodeNeighbours(id, impossibleMoves) {
+	var neighbours = [id - 9, id + 9, id % 9 == 8 ? -1 : id + 1, id % 9 == 0 ? -1 : id - 1].filter(function(value) {
+		return value >= 0 && value < 81 && arrayIndex(impossibleMoves, [id, value]) == -1;
+	});
+
+	return neighbours;
+};
+
+function pathfinder(impossibleMoves, actualPos, objectives, seenPos = [], impossiblePos = []) {
+	if (objectives.indexOf(actualPos) != -1) {
+		return seenPos;
+	};
+
+	seenPos.push(actualPos);
+	var neighbours = getNodeNeighbours(actualPos, impossibleMoves);
+	for (var neighbour of neighbours) {
+		if (seenPos.indexOf(neighbour) == -1 && impossiblePos.indexOf(neighbour) == -1) {
+			var tmp = pathfinder(impossibleMoves, neighbour, objectives, seenPos, impossiblePos);
+			if (tmp) {
+				return tmp;
+			} else {
+				impossiblePos.push(neighbour);
+			};
+		};
+	};
+	return undefined;
+};
+
+function doesntBlockAnybody(client, newWall) {
+	var objectives = [0 , 1, 2, 3, 4, 5, 6, 7, 8];
+
+	for (var player of client.datas.room.players) {
+		dynamicPos = getRotationByIndexInRoom(player, client, player.datas.pos);
+
+		impossibleMoves = [];
+
+		for (var wall of client.datas.walls.concat([newWall])) {
+			relativeCell = (wall % 2 == 0 ? wall : wall - 1) / 2;
+			line = Math.floor(relativeCell / 8);
+			column = relativeCell % 8;
+
+			relativeCell = line * 9 + column;
+
+			switch (wall % 2) {
+				case 0:
+					impossibleMoves.push([relativeCell, relativeCell + 9]);
+					impossibleMoves.push([relativeCell + 1, relativeCell + 10]);
+					break;
+				case 1:
+					impossibleMoves.push([relativeCell, relativeCell + 1]);
+					impossibleMoves.push([relativeCell + 9, relativeCell + 10]);
+					break;
+			};
+		};
+
+		var dynamicObjective = [];
+		for (var pos of objectives) {
+			dynamicObjective.push(getRotationByIndexInRoom(player, client, pos));
+		};
+
+
+		if (!pathfinder(impossibleMoves, dynamicPos, dynamicObjective)) {
+			return false;
+		};
+	};
+	return true;
+};
+
+
 // Clients listeners
 
 io.on('connection', function(client) {
@@ -498,7 +569,9 @@ io.on('connection', function(client) {
 		if (client.datas.room &&
 			client.datas.room.isClientTurn(client.datas) &&
 			client.datas.wallsRemaining > 0 &&
-			notSuperimposed(client.datas.walls, data.wall)) {
+			notSuperimposed(client.datas.walls, data.wall) &&
+			doesntBlockAnybody(client, data.wall)) {
+
 				var wallInfos = {
 					wallID: data.wall,
 					color: client.datas.color
