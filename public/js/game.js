@@ -119,21 +119,32 @@ function draw() {
 	for (var cell of gameboard) {
 		fill(cell.color);
 		if (cell.stroke) {
+			// stroke(cell.color);
+			// fill(color("#fff"));
+			// strokeWeight(4);
 			stroke("#000000");
 		} else {
+			// fill(color(cell.color));
 			noStroke();
 		};
 		rect(cell.x, cell.y, cell.width, cell.height, 10);
 	};
 
 	for (var wall of walls) {
-		fill(wall.color);
 		if (wall.stroke) {
+			// fill("#fff");
+			// stroke(wall.color);
+			// strokeWeight(4);
+			fill(wall.color);
 			stroke("#000000");
-		} else {
-			noStroke();
+			rect(wall.x, wall.y, wall.width, wall.height, 10);
+		} else if (wall.mouseInCell() && deplacementCells.length > 0 && wallsRemaining > 0) {
+			fill(color("#FFF"));
+			stroke(playerColor);
+			strokeWeight(4);
+			rect(wall.x, wall.y, wall.width, wall.height, 10);
 		};
-		rect(wall.x, wall.y, wall.width, wall.height, 10);
+		strokeWeight(1);
 	};
 
 	for (var i = 0 ; i < wallsRemaining ; i++) {
@@ -146,9 +157,10 @@ function draw() {
 var deplacementCells = [];
 
 socket.on("yourTurn", function(data) {
-	$("#gameState").text("Your turn");
+	$("#gameState").text("C'est ton tour !");
 	for (var cell of data) {
 		if (cell >= 0 && cell < gameboard.length) {
+			// gameboard[cell].color = "#103050";
 			gameboard[cell].color = color("#103050");
 			deplacementCells.push(gameboard[cell]);
 		};
@@ -156,11 +168,12 @@ socket.on("yourTurn", function(data) {
 });
 
 socket.on("turnEnd", function() {
-	$("#gameState").text("Waiting for opponent turn..");
+	$("#gameState").text("C'est pas encore à toi de jouer..");
 });
 
 function resetCells() {
 	for (var cell of deplacementCells) {
+		// cell.color = "#909090";
 		cell.color = color("#909090");
 		cell.stroke = false;
 	};
@@ -173,17 +186,20 @@ socket.on('move', function(data) {
 	resetCells();
 
 	gameboard[data.to].stroke = true;
+	// gameboard[data.to].color = data.color;
 	gameboard[data.to].color = color(data.color);
 	if ("from" in data) {
 		gameboard[data.from].stroke = false;
+		// 	gameboard[data.from].color = "#909090";
 		gameboard[data.from].color = color("#909090");
-	}
+	};
 });
 
 socket.on('newWall', function(data) {
 
 	resetCells();
 
+	// walls[data.wallID].color = data.color;
 	walls[data.wallID].color = color(data.color);
 	walls[data.wallID].stroke = true;
 });
@@ -194,6 +210,7 @@ socket.on('wallsRemaining', function(data) {
 
 socket.on("resetGame", function() {
 	for (var cell of gameboard) {
+		// cell.color = "#909090";
 		cell.color = color("#909090");
 		cell.stroke = false;
 	};

@@ -497,7 +497,6 @@ io.on('connection', function(client) {
 
 	client.on('createRoom', function(data) {
 		if (data.name.length > 0 && getRoomByName(data.name) == undefined) {
-			// verifier les noms identiques
 			removeEmptyRooms();
 			roomList.push(new Room(data));
 			var joinableRooms = getJoinableRooms();
